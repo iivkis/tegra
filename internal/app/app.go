@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"log"
+	"tegra/internal/keyboard"
 	"tegra/internal/repository"
 	"tegra/pkg/tegra"
 
@@ -42,6 +43,8 @@ func Launch() {
 
 		if update.Message != nil && update.Message.Text != "" {
 			go handler.HandleMessage(&update)
+		} else if update.CallbackQuery != nil {
+			go handler.HandleCallback(&update)
 		}
 	}
 }
@@ -69,7 +72,9 @@ func setHandlerFuncs(h *tegra.Handler) {
 	//set commands
 	{
 		h.AddCommand("^/start$", func(upd *tegra.Update) {
-			bot.Send(tgbotapi.NewMessage(upd.SentID, h.Replicas.Get("cmd_start")))
+			msg := tgbotapi.NewMessage(upd.SentID, h.Replicas.Get("cmd_start"))
+			msg.ReplyMarkup = keyboard.InlineStart()
+			bot.Send(msg)
 		})
 
 		h.AddCommand("^/repeat$", func(upd *tegra.Update) {
@@ -98,6 +103,14 @@ func setHandlerFuncs(h *tegra.Handler) {
 		h.AddAction(ACT_REPEAT_WORD, func(upd *tegra.Update) {
 			bot.Send(tgbotapi.NewMessage(upd.SentID, upd.Message.Text))
 			h.Actions.Clear(upd.SentID)
+		})
+	}
+
+	//set callbacks
+	{
+		h.AddCallback("^/okey$", func(upd *tegra.Update) {
+			msg := tgbotapi.NewCallbackWithAlert(upd.CallbackQuery.ID, "Yea, All Okey!")
+			bot.Send(msg)
 		})
 	}
 }

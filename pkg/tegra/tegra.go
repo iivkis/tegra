@@ -20,9 +20,10 @@ type Handler struct {
 	Storage  *Storage
 	Replicas *Replicas
 
-	addedHandlers []handlerData
-	addedActions  map[string][]HandlerFunc
-	cmdNotFound   []HandlerFunc
+	addedHandlers  []handlerData
+	addedCallbacks []handlerData
+	addedActions   map[string][]HandlerFunc
+	cmdNotFound    []HandlerFunc
 
 	logInfo *log.Logger
 }
@@ -50,6 +51,16 @@ func (h *Handler) HandleMessage(update *tgbotapi.Update) {
 	}
 }
 
+func (h *Handler) AddCommand(regexpPattern string, handlers ...HandlerFunc) {
+	pattern, err := regexp.Compile(regexpPattern)
+	if err != nil {
+		panic(err)
+	}
+
+	h.addedHandlers = append(h.addedHandlers, handlerData{Pattern: pattern, Funcs: handlers})
+	h.logInfo.Printf("Command `%s` has been added", regexpPattern)
+}
+
 func (h *Handler) HandleMessageCommand(upd *Update) {
 	for _, hand := range h.addedHandlers {
 		if ok := hand.Pattern.MatchString(upd.Message.Text); ok {
@@ -65,16 +76,6 @@ func (h *Handler) HandleMessageCommand(upd *Update) {
 		}
 	}
 	h.useCmdNotFound(upd)
-}
-
-func (h *Handler) AddCommand(regexpPattern string, handlers ...HandlerFunc) {
-	pattern, err := regexp.Compile(regexpPattern)
-	if err != nil {
-		panic(err)
-	}
-
-	h.addedHandlers = append(h.addedHandlers, handlerData{Pattern: pattern, Funcs: handlers})
-	h.logInfo.Printf("Command `%s` has been added", regexpPattern)
 }
 
 func (h *Handler) CommandNotFound(handlers ...HandlerFunc) {
@@ -98,5 +99,31 @@ func (h *Handler) HandleMessageAction(upd *Update) {
 		}
 		upd.stop()
 		fn(upd)
+	}
+}
+
+func (h *Handler) AddCallback(cbRegexpPattern string, handlers ...HandlerFunc) {
+	pattern, err := regexp.Compile(cbRegexpPattern)
+	if err != nil {
+		panic(err)
+	}
+
+	h.addedCallbacks = append(h.addedCallbacks, handlerData{Pattern: pattern, Funcs: handlers})
+	h.logInfo.Printf("Command `%s` has been added", cbRegexpPattern)
+}
+
+func (h *Handler) HandleCallback(update *tgbotapi.Update) {
+	var upd = newUpdate(update)
+	for _, callback := range h.addedCallbacks {
+		if ok := callback.Pattern.MatchString(upd.CallbackData()); ok {
+			for _, fn := range callback.Funcs {
+				if upd.isStopped() {
+					break
+				}
+				upd.stop()
+				fn(upd)
+			}
+			break
+		}
 	}
 }
