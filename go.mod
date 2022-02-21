@@ -1,4 +1,4 @@
-module tegra
+module github.com/iivkis/tegra
 
 go 1.17
 
