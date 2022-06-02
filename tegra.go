@@ -8,11 +8,11 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-type HandlerFunc func(upd *Update)
+type handlerFunc func(upd *Update)
 
 type handlerData struct {
 	Pattern *regexp.Regexp
-	Funcs   []HandlerFunc
+	Funcs   []handlerFunc
 }
 
 type Handler struct {
@@ -22,8 +22,8 @@ type Handler struct {
 
 	addedHandlers  []handlerData
 	addedCallbacks []handlerData
-	addedActions   map[string][]HandlerFunc
-	cmdNotFound    []HandlerFunc
+	addedActions   map[string][]handlerFunc
+	cmdNotFound    []handlerFunc
 
 	logInfo *log.Logger
 }
@@ -34,7 +34,7 @@ func NewHandler(replicas map[string]string) *Handler {
 		Storage:  newStorage(),
 		Replicas: newReplicas(replicas),
 
-		addedActions: make(map[string][]HandlerFunc),
+		addedActions: make(map[string][]handlerFunc),
 		logInfo:      log.New(os.Stdout, "[tegra:info] ", 0),
 	}
 }
@@ -51,7 +51,7 @@ func (h *Handler) HandleMessage(update *tgbotapi.Update) {
 	}
 }
 
-func (h *Handler) AddCommand(regexpPattern string, handlers ...HandlerFunc) {
+func (h *Handler) AddCommand(regexpPattern string, handlers ...handlerFunc) {
 	pattern, err := regexp.Compile(regexpPattern)
 	if err != nil {
 		panic(err)
@@ -78,7 +78,7 @@ func (h *Handler) HandleMessageCommand(upd *Update) {
 	h.useCmdNotFound(upd)
 }
 
-func (h *Handler) CommandNotFound(handlers ...HandlerFunc) {
+func (h *Handler) CommandNotFound(handlers ...handlerFunc) {
 	h.cmdNotFound = handlers
 }
 
@@ -88,7 +88,7 @@ func (h *Handler) useCmdNotFound(upd *Update) {
 	}
 }
 
-func (h *Handler) AddAction(actionName string, handlers ...HandlerFunc) {
+func (h *Handler) AddAction(actionName string, handlers ...handlerFunc) {
 	h.addedActions[actionName] = handlers
 }
 
@@ -102,7 +102,7 @@ func (h *Handler) HandleMessageAction(upd *Update) {
 	}
 }
 
-func (h *Handler) AddCallback(cbRegexpPattern string, handlers ...HandlerFunc) {
+func (h *Handler) AddCallback(cbRegexpPattern string, handlers ...handlerFunc) {
 	pattern, err := regexp.Compile(cbRegexpPattern)
 	if err != nil {
 		panic(err)
