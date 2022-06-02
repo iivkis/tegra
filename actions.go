@@ -1,57 +1,56 @@
 package tegra
 
 import (
-	"log"
-	"os"
+	"fmt"
 	"time"
 )
 
-type Actions struct {
-	actions map[int64]action
-	log     *log.Logger
+type Action struct {
+	Name      string
+	CreatedAt int64
 }
 
-type action struct {
-	Name       string
-	ExpiresdIn int64
-}
+type ActionStorage map[int64]Action
 
-func newActions() *Actions {
-	actions := &Actions{
-		actions: make(map[int64]action),
-		log:     log.New(os.Stdout, "[tegra:actions] ", 0),
+//lifetime - action lifetime (in milliseconds)
+func NewActions(lifetime int64) ActionStorage {
+	a := make(ActionStorage)
+
+	if lifetime == 0 {
+		lifetime = 24 * 60 * 60 * 1000 //1 day
 	}
 
-	actions.garbage()
-	return actions
+	a.Garbage(lifetime)
+	return a
 }
 
-func (a *Actions) Set(telegramID int64, actionName string) {
-	a.actions[telegramID] = action{
-		Name:       actionName,
-		ExpiresdIn: time.Now().Add(time.Hour * 24 * 7).Unix(),
+func (a ActionStorage) Set(tgID int64, name string) {
+	a[tgID] = Action{
+		Name:      name,
+		CreatedAt: time.Now().UnixMilli(),
 	}
 }
 
-func (a *Actions) Get(telegramID int64) string {
-	return a.actions[telegramID].Name
+func (a ActionStorage) Get(tgID int64) string {
+	return a[tgID].Name
 }
 
-func (a *Actions) Count() int {
-	return len(a.actions)
+func (a ActionStorage) Count() int {
+	return len(a)
 }
 
-func (a *Actions) Clear(telegramID int64) {
-	delete(a.actions, telegramID)
+func (a ActionStorage) Clear(tgID int64) {
+	delete(a, tgID)
 }
 
-func (a *Actions) garbage() {
+func (a ActionStorage) Garbage(lifetime int64) {
 	go func() {
-		for t := range time.Tick(time.Hour * 24) {
-			for telegramID, action := range a.actions {
-				if t.Unix() >= action.ExpiresdIn {
-					a.Clear(telegramID)
-					a.log.Printf("autoclear %d/n", telegramID)
+		for t := range time.Tick(time.Millisecond * time.Duration(lifetime)) {
+			n := lifetime - t.UnixMilli()
+			for tgID, action := range a {
+				if action.CreatedAt-n <= 0 {
+					a.Clear(tgID)
+					fmt.Printf("clear action with tgID `%d`", tgID)
 				}
 			}
 		}

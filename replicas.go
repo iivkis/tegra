@@ -2,26 +2,19 @@ package tegra
 
 import (
 	"fmt"
-	"log"
-	"os"
 )
 
-type Replicas struct {
-	r      map[string]string
-	logErr *log.Logger
+type Replicas map[string]string
+
+func NewReplicas(r Replicas) Replicas {
+	return r
 }
 
-func newReplicas(r map[string]string) *Replicas {
-	return &Replicas{
-		r:      r,
-		logErr: log.New(os.Stdout, "[replicas:err] ", 0),
-	}
-}
-
-func (r *Replicas) Get(titile string, v ...interface{}) string {
-	s, ok := r.r[titile]
+func (r Replicas) Get(title string, v ...interface{}) string {
+	s, ok := r[title]
 	if !ok {
-		r.logErr.Printf("undefined title `%s`", titile)
+		fmt.Printf("undefined title `%s`", title)
+		return ""
 	}
 	return fmt.Sprintf(s, v...)
 }

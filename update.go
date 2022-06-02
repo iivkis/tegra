@@ -10,16 +10,17 @@ type Update struct {
 	SentID int64
 	ChatID int64
 
+	Storage
+
 	stopped bool
-	store   map[string]interface{}
 }
 
-func newUpdate(upd *tgbotapi.Update) *Update {
+func NewUpdate(upd *tgbotapi.Update) *Update {
 	return &Update{
-		Update: upd,
-		SentID: upd.SentFrom().ID,
-		ChatID: upd.FromChat().ID,
-		store:  map[string]interface{}{},
+		Update:  upd,
+		SentID:  upd.SentFrom().ID,
+		ChatID:  upd.FromChat().ID,
+		Storage: NewStorage(),
 	}
 }
 
@@ -31,14 +32,6 @@ func (upd *Update) stop() {
 	upd.stopped = true
 }
 
-func (upd *Update) isStopped() bool {
+func (upd *Update) Stopped() bool {
 	return upd.stopped
-}
-
-func (upd *Update) SetItem(name string, v interface{}) {
-	upd.store[name] = v
-}
-
-func (upd *Update) GetItem(name string) (v interface{}) {
-	return upd.store[name]
 }
