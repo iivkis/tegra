@@ -19,9 +19,9 @@ type TegraHandlerConfig struct {
 }
 
 type TegraHandler struct {
-	Local         Storage
-	Replicas      Replicas
-	ActionStorage ActionStorage
+	Local         *Storage
+	Replicas      *Replicas
+	ActionStorage *ActionStorage
 
 	allHandlers  []*Handler
 	allCallbacks []*Handler

@@ -4,14 +4,16 @@ import (
 	"fmt"
 )
 
-type Replicas map[string]string
+type Replicas struct {
+	m map[string]string
+}
 
-func NewReplicas(r Replicas) Replicas {
-	return r
+func NewReplicas(m map[string]string) *Replicas {
+	return &Replicas{m}
 }
 
 func (r Replicas) Get(title string, v ...interface{}) string {
-	s, ok := r[title]
+	s, ok := r.m[title]
 	if !ok {
 		fmt.Printf("undefined title `%s`", title)
 		return ""

@@ -10,7 +10,7 @@ type Update struct {
 	SentID int64
 	ChatID int64
 
-	Storage
+	*Storage
 
 	stopped bool
 }
